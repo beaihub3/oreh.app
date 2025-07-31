@@ -12,8 +12,8 @@
         <div class="login-card">
             <div class="logo-text">OREH</div>
             <div class="input-group">
-                <label for="username">Usuário</label>
-                <input type="text" id="username" placeholder="Digite seu usuário">
+                <label for="username">E-mail</label>
+                <input type="email" id="username" placeholder="Digite seu e-mail">
             </div>
             <div class="input-group">
                 <label for="password">Senha</label>
@@ -89,7 +89,27 @@
     </div>
 
     <div class="modal" id="uploadModal">
+        <div class="modal-content">
+            <button class="close-modal" id="closeUploadModalBtn">&times;</button>
+            <div class="modal-header">
+                <h3>Adicionar Novo Arquivo</h3>
+            </div>
+            <form id="uploadFileForm">
+                <div class="form-group">
+                    <label for="fileNameInput">Nome do Arquivo</label>
+                    <input type="text" id="fileNameInput" required placeholder="Ex: Relatório Mensal">
+                </div>
+                <div class="form-group">
+                    <label for="fileUploadInput">Selecione o arquivo</label>
+                    <input type="file" id="fileUploadInput" required>
+                </div>
+                <div class="btn-group">
+                    <button type="button" class="btn btn-secondary" id="cancelUploadBtn">Cancelar</button>
+                    <button type="submit" class="btn btn-primary">Salvar</button>
+                </div>
+            </form>
         </div>
+    </div>
 
     <div class="modal" id="eventDetailModal">
         <div class="modal-content">

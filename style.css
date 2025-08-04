@@ -1,0 +1,12 @@
+/*
+ * Ponto de entrada principal para todos os estilos do projeto Oreh.
+ * Este arquivo importa todos os outros módulos de CSS.
+ * Ordem:
+ * 1. main.css: Variáveis globais, reset e layout principal.
+ * 2. components.css: Estilos para elementos reutilizáveis (botões, cards).
+ * 3. pages.css: Estilos específicos de cada página.
+*/
+
+@import url('css/main.css');
+@import url('css/components.css');
+@import url('css/pages.css');

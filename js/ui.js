@@ -1,4 +1,13 @@
-import { fetchWithAuth } from './api.js';
+import { fetchWithAuth, 
+    N8N_GET_STATUS_URL,
+    N8N_GET_DRIVE_FILES_URL,
+    N8N_DELETE_DRIVE_FILE_URL,
+    N8N_UPLOAD_DRIVE_FILE_URL,
+    N8N_GET_AGENDA_URL,
+    N8N_GET_ATENDIMENTOS_URL,
+    N8N_GET_AI_SETTINGS_URL,
+    N8N_UPDATE_AI_SETTINGS_URL
+} from './api.js';
 
 // Variáveis de estado da Agenda
 const agendaStartHour = 7;
@@ -58,6 +67,63 @@ function setupNavigation() {
     });
 }
 
+// Adicione esta função ao ui.js
+function setupUploadModal() {
+    const openUploadModalBtn = document.getElementById('openUploadModalBtn');
+    const uploadModal = document.getElementById('uploadModal');
+    const uploadForm = document.getElementById('uploadForm');
+    const fileInput = document.getElementById('fileInput');
+
+    if (openUploadModalBtn) {
+        openUploadModalBtn.addEventListener('click', () => {
+            uploadModal.style.display = 'flex';
+        });
+    }
+
+    if (uploadForm) {
+        uploadForm.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const file = fileInput.files[0];
+            if (!file) {
+                showToast('Por favor, selecione um arquivo.', 'error');
+                return;
+            }
+
+            // Você precisará criar este webhook no n8n
+            const uploadUrl = N8N_UPLOAD_DRIVE_FILE_URL
+            
+            if (!uploadUrl) {
+                showToast('URL de upload não configurada.', 'error');
+                return;
+            }
+
+            const formData = new FormData();
+            formData.append('file', file);
+
+            try {
+                // A função fetchWithAuth precisa ser adaptada para enviar multipart/form-data
+                const token = localStorage.getItem('oreh_token');
+                const response = await fetch(uploadUrl, {
+                    method: 'POST',
+                    headers: { 'Authorization': `Bearer ${token}` },
+                    body: formData
+                });
+
+                if (response.ok) {
+                    showToast('Arquivo enviado com sucesso!', 'success');
+                    uploadModal.style.display = 'none';
+                    loadDriveFiles(); // Recarrega a lista de arquivos
+                } else {
+                    const error = await response.json();
+                    throw new Error(error.message || 'Falha no upload');
+                }
+            } catch (error) {
+                showToast(error.message, 'error');
+            }
+        });
+    }
+}
+
 function setupModals() {
     const modals = document.querySelectorAll('.modal');
     const closeButtons = document.querySelectorAll('.close-modal');
@@ -83,14 +149,15 @@ function setupModals() {
 // =================================================================================
 
 async function updateConnectionStatus() {
-    const webhookUrl = window.userWebhooks?.get_status_url;
+    // Substituído window.userWebhooks pela constante importada
+    const webhookUrl = N8N_GET_STATUS_URL; 
     if (!webhookUrl) return showToast('URL de Status não configurada.', 'error');
     
     const statusElement = document.getElementById('connectionStatus');
     const qrCodeOutput = document.getElementById('qrcode-output');
     const disconnectBtn = document.getElementById('disconnectBtn');
 
-    statusElement.textContent = 'A VERIFICAR...';
+    statusElement.textContent = 'VERIFICANDO CONEXÃO...';
     try {
         const response = await fetchWithAuth(webhookUrl);
         const data = await response.json();
@@ -99,15 +166,15 @@ async function updateConnectionStatus() {
         if (statusData?.data?.instance?.state === 'open') {
             statusElement.textContent = 'CONECTADO';
             disconnectBtn.style.display = 'block';
-            qrCodeOutput.innerHTML = '<p>A sua instância está conectada.</p>';
+            qrCodeOutput.innerHTML = '<p>Telefone conectado.</p>';
         } else if (statusData?.data?.base64) {
-            statusElement.textContent = 'A AGUARDAR CONEXÃO';
+            statusElement.textContent = 'AGUARDANDO CONEXÃO';
             disconnectBtn.style.display = 'none';
             qrCodeOutput.innerHTML = `<img src="${statusData.data.base64}" alt="QR Code para conexão">`;
         } else {
             statusElement.textContent = 'DESCONECTADO';
             disconnectBtn.style.display = 'none';
-            qrCodeOutput.innerHTML = '<p>Instância desconectada.</p>';
+            qrCodeOutput.innerHTML = '<p>Telefone desconectado.</p>';
         }
     } catch (error) {
         console.error('[OREH] Erro ao verificar status:', error);
@@ -116,11 +183,12 @@ async function updateConnectionStatus() {
 }
 
 async function loadDriveFiles() {
-    const webhookUrl = window.userWebhooks?.get_drive_files_url;
+    // Substituído window.userWebhooks pela constante importada
+    const webhookUrl = N8N_GET_DRIVE_FILES_URL; 
     if (!webhookUrl) return showToast('URL do Drive não configurada.', 'error');
 
     const fileGrid = document.getElementById('fileGrid');
-    fileGrid.innerHTML = '<p>A carregar ficheiros...</p>';
+    fileGrid.innerHTML = '<p>Carregando arquivos...</p>';
 
     try {
         const response = await fetchWithAuth(webhookUrl);
@@ -128,7 +196,7 @@ async function loadDriveFiles() {
         fileGrid.innerHTML = '';
 
         if (!files || files.length === 0) {
-            fileGrid.innerHTML = '<p>Nenhum ficheiro encontrado.</p>';
+            fileGrid.innerHTML = '<p>Nenhum arquivo encontrado.</p>';
             return;
         }
 
@@ -158,13 +226,13 @@ async function loadDriveFiles() {
         
     } catch (error) {
         console.error('[OREH] Erro ao carregar ficheiros do Drive:', error);
-        showToast('Erro ao carregar ficheiros do Drive.', 'error');
+        showToast('Arquivos não encontrados.', 'error');
     }
 }
 
 
 async function deleteDriveFile(fileId) {
-    const webhookUrl = window.userWebhooks?.delete_drive_file_url;
+    const webhookUrl = N8N_DELETE_DRIVE_FILE_URL;
     if (!webhookUrl) return showToast('URL para deletar arquivos não configurada.', 'error');
 
     try {
@@ -186,7 +254,7 @@ async function deleteDriveFile(fileId) {
 }
 
 async function loadAgenda() {
-    const webhookUrl = "https://webhook.ia-tess.com.br/webhook/get-agenda";
+    const webhookUrl = N8N_GET_AGENDA_URL;
     if (!webhookUrl) return showToast('URL da Agenda não configurada.', 'error');
     
     try {
@@ -258,7 +326,7 @@ function renderAgenda(events) {
 }
 
 async function loadAtendimentos() {
-    const webhookUrl = "https://webhook.ia-tess.com.br/webhook/get-atendimentos";
+    const webhookUrl = N8N_GET_ATENDIMENTOS_URL;
     if (!webhookUrl) return showToast('URL de Atendimentos não configurada.', 'error');
 
     const chatsGrid = document.getElementById('chatsGrid');
@@ -320,8 +388,7 @@ function renderAtendimentos(chats) {
 
 async function loadAiSettings() {
     console.log("[OREH] Carregando configurações de IA...");
-    // Assumindo que a URL correta está no objeto de webhooks que você carrega no login
-    const webhookUrl = "https://webhook.ia-tess.com.br/webhook/get-ai-settings"; // Substitua pela sua URL GET real ou use a variável global
+    const webhookUrl = N8N_GET_AI_SETTINGS_URL;
     if (!webhookUrl) return showToast('URL de Gestão de IA não configurada.', 'error');
 
     try {
@@ -353,7 +420,7 @@ async function loadAiSettings() {
 
 async function saveAiSettings() {
     console.log("[OREH] Salvando configurações de IA...");
-    const webhookUrl = "https://webhook.ia-tess.com.br/webhook/update-ai-settings"; // Substitua pela sua URL POST/UPDATE real ou use a variável global
+    const webhookUrl = N8N_UPDATE_AI_SETTINGS_URL;
     if (!webhookUrl) return showToast('URL para salvar configurações não definida.', 'error');
 
     const saveBtn = document.getElementById('saveAiSettingsBtn');
@@ -411,6 +478,7 @@ export {
     showToast,
     setupNavigation,
     setupModals,
+    setupUploadModal,
     updateConnectionStatus,
     loadDriveFiles,
     deleteDriveFile,

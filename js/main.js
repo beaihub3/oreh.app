@@ -1,7 +1,8 @@
 import { checkLoginState, login, logout } from './auth.js';
 import { 
     setupNavigation, 
-    setupModals, // Importa a nova função
+    setupModals,
+    setupUploadModal,
     saveAiSettings,
     loadAgenda, 
     loadAtendimentos 
@@ -32,32 +33,42 @@ function setupEventListeners() {
         saveAiSettingsBtn.addEventListener('click', saveAiSettings);
     }
 
-    // Listener para os cards de ATENDIMENTO - Add null checks
-    const chatsGrid = document.getElementById('chatsGrid');
-    if (chatsGrid) {
-        chatsGrid.addEventListener('click', (e) => {
-            const card = e.target.closest('.chat-card');
-            if (!card) return;
-            
-            // Add null checks for each modal element
-            const customerEl = document.getElementById('chatDetailCustomer');
-            const phoneEl = document.getElementById('chatDetailPhone');
-            const statusEl = document.getElementById('chatDetailStatus');
-            const createdEl = document.getElementById('chatDetailCreated');
-            const summaryEl = document.getElementById('chatDetailSummary');
-            const modalEl = document.getElementById('chatDetailModal');
 
-            if (customerEl) customerEl.textContent = card.dataset.customer_name || 'N/A';
-            if (phoneEl) phoneEl.textContent = card.dataset.customer_phone || 'N/A';
-            if (statusEl) {
-                statusEl.textContent = (card.dataset.status || 'N/A').replace('_', ' ');
-                statusEl.dataset.status = card.dataset.status;
-            }
-            if (createdEl) createdEl.textContent = card.dataset.formatted_created_at || new Date(card.dataset.created_at).toLocaleString('pt-BR');
-            if (summaryEl) summaryEl.textContent = card.dataset.last_message_summary || 'Nenhuma informação.';
-            if (modalEl) modalEl.style.display = 'flex';
-        });
-    }
+// Listener para os cards de ATENDIMENTO
+const chatsGrid = document.getElementById('chatsGrid');
+if (chatsGrid) {
+    chatsGrid.addEventListener('click', (e) => {
+        const card = e.target.closest('.chat-card');
+        if (!card) return;
+
+        const modal = document.getElementById('chatDetailModal');
+        if (!modal) return;
+
+        // Função para definir o texto de um elemento com segurança
+        const setText = (id, text) => {
+            const el = modal.querySelector(id);
+            if (el) el.textContent = text || 'N/A';
+        };
+
+        const status = (card.dataset.status || 'N/A').replace(/_/g, ' ');
+        const statusEl = modal.querySelector('#chatDetailStatus');
+
+        setText('#chatDetailCustomer', card.dataset.customer_name);
+        setText('#chatDetailPhone', card.dataset.customer_phone);
+        setText('#chatDetailCreated', card.dataset.formatted_created_at || new Date(card.dataset.created_at).toLocaleString('pt-BR'));
+        setText('#chatDetailSummary', card.dataset.last_message_summary || 'Nenhuma informação.');
+
+        if (statusEl) {
+            statusEl.textContent = status;
+            // Remove classes antigas e adiciona a nova para a cor correta
+            statusEl.className = 'status-badge'; 
+            statusEl.classList.add(status.toLowerCase());
+            statusEl.dataset.status = card.dataset.status;
+        }
+
+        modal.style.display = 'flex';
+    });
+}
 
     // Listener para os cards da AGENDA - Add null checks
     const agendaBody = document.getElementById('agendaBody');
@@ -91,7 +102,8 @@ function setupEventListeners() {
 // --- INICIALIZAÇÃO DA APLICAÇÃO ---
 document.addEventListener('DOMContentLoaded', () => {
     setupNavigation();
-    setupModals(); // CORREÇÃO: Chama a função para configurar os modais
+    setupModals();
+    setupUploadModal();
     setupEventListeners();
     checkLoginState(); 
 });

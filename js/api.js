@@ -1,47 +1,33 @@
 import { logout } from './auth.js';
 import { showToast } from './ui.js';
 
-const N8N_CONFIG_URL = 'https://webhook.ia-tess.com.br/webhook/config/webhooks'; 
-// ▼▼▼ ADICIONE A URL DO NOVO WEBHOOK AQUI ▼▼▼
-const N8N_USER_PROFILE_URL = 'https://webhook.ia-tess.com.br/webhook/get-user-profile'; 
-window.userWebhooks = {};
+// Endereços do Backend (n8n)
+const API_BASE_URL = 'https://webhook.ia-tess.com.br/webhook';
+export const N8N_LOGIN_URL = `${API_BASE_URL}/login-oreh`;
+export const N8N_USER_PROFILE_URL = `${API_BASE_URL}/get-user-profile`;
+export const N8N_GET_STATUS_URL = `${API_BASE_URL}/conectar-whats-teste1`;
+export const N8N_GET_DRIVE_FILES_URL = `${API_BASE_URL}/coleta-arquivos-drive`;
+export const N8N_UPLOAD_DRIVE_FILE_URL = `${API_BASE_URL}/upload-arquivos`; 
+export const N8N_DELETE_DRIVE_FILE_URL = `${API_BASE_URL}/deleta-arquivos`;
+export const N8N_GET_AGENDA_URL = `${API_BASE_URL}/get-agenda`;
+export const N8N_GET_ATENDIMENTOS_URL = `${API_BASE_URL}/get-atendimentos`;
+export const N8N_GET_AI_SETTINGS_URL = `${API_BASE_URL}/get-ai-settings`;
+export const N8N_UPDATE_AI_SETTINGS_URL = `${API_BASE_URL}/update-ai-settings`;
+
+
+// A variável global userWebhooks não é mais necessária.
+// window.userWebhooks = {};
 
 async function initializeApp() {
     console.log('[OREH] Inicializando o app...');
-    // A busca de configuração do usuário agora acontece em paralelo ou depois
-    await fetchUserConfiguration();
-    
-    // O ideal é que a página home seja exibida por padrão, 
-    // e os dados específicos (como AI) carreguem quando a página for visitada.
-    if (Object.keys(window.userWebhooks).length > 0 || localStorage.getItem('oreh_token')) {
+    // A função fetchUserConfiguration foi removida.
+    // O token de login é a única verificação necessária.
+    if (localStorage.getItem('oreh_token')) {
+        // Clica na página home por padrão ao carregar.
         document.querySelector('.nav-link[data-page="home"]').click();
     } else {
         console.error('[OREH] Nenhuma configuração encontrada. Deslogando.');
         logout();
-    }
-}
-
-async function fetchUserConfiguration() {
-    console.log('[OREH] Buscando configuração de webhooks...');
-    const cachedWebhooks = sessionStorage.getItem('oreh_webhooks');
-    if (cachedWebhooks) {
-        window.userWebhooks = JSON.parse(cachedWebhooks);
-        return;
-    }
-
-    try {
-        const response = await fetchWithAuth(N8N_CONFIG_URL);
-        const data = await response.json();
-        if (!data || data.length === 0) {
-            throw new Error('Configuração de webhooks não encontrada para este usuário.');
-        }
-        window.userWebhooks = data[0];
-        sessionStorage.setItem('oreh_webhooks', JSON.stringify(window.userWebhooks));
-
-    } catch (error) {
-        console.error('[OREH] Falha ao buscar configuração:', error);
-        // Não deslogar aqui, pode ser um problema temporário de rede.
-        // showToast(error.message, 'error'); 
     }
 }
 
@@ -53,9 +39,13 @@ async function fetchWithAuth(url, options = {}) {
     }
     
     const defaultHeaders = {
-        'Authorization': `Bearer ${token}`,
-        'Content-Type': 'application/json'
+        'Authorization': `Bearer ${token}`
     };
+
+    // Para uploads de arquivo, o Content-Type é definido pelo FormData
+    if (!(options.body instanceof FormData)) {
+        defaultHeaders['Content-Type'] = 'application/json';
+    }
 
     const config = {
         ...options,
@@ -70,17 +60,18 @@ async function fetchWithAuth(url, options = {}) {
         if(response.status === 401 || response.status === 403) {
             logout();
         }
-        const errorData = await response.json();
+        const errorData = await response.json().catch(() => ({ message: `Erro na requisição: ${response.statusText}` }));
         throw new Error(errorData.message || `Erro na requisição: ${response.statusText}`);
     }
     return response;
 }
 
+
 // ▼▼▼ NOVA FUNÇÃO PARA BUSCAR INFO DO USUÁRIO ▼▼▼
 async function fetchUserProfile() {
     try {
         const response = await fetchWithAuth(N8N_USER_PROFILE_URL);
-        return await response.json(); // Retorna { userName: "...", userInitial: "..." }
+        return await response.json();
     } catch (error) {
         console.error('[OREH] Falha ao buscar perfil do usuário:', error);
         showToast(error.message, 'error');
@@ -89,4 +80,4 @@ async function fetchUserProfile() {
 }
 
 
-export { initializeApp, fetchUserConfiguration, fetchWithAuth, fetchUserProfile };
+export { initializeApp, fetchWithAuth, fetchUserProfile }; // Removido fetchUserConfiguration

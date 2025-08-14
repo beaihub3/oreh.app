@@ -536,9 +536,11 @@
     color: white;
 }
 
-.status-badge[data-status="Aguardando"] { background-color: var(--accent); }
-.status-badge[data-status="Em_atendimento"] { background-color: var(--success); }
-.status-badge[data-status="Finalizado"] { background-color: var(--danger); }
+.status-badge[data-status="Interessado"] { background-color: var(--accent); }
+.status-badge[data-status="Em_duvida"] { background-color: var(--accent); }
+.status-badge[data-status="Potencial_venda"] { background-color: var(--success); }
+.status-badge[data-status="Pronto_para_fechar"] { background-color: var(--success); }
+.status-badge[data-status="Sem_Interesse"] { background-color: var(--danger); }
 .status-badge[data-status="N/A"] { background-color: var(--gray); }
 
 /* =================================== */
@@ -617,3 +619,4 @@
     font-size: 22px;
 
 }
+

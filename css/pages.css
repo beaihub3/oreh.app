@@ -483,10 +483,22 @@
     box-shadow: 0 8px 20px rgba(0,0,0,0.08);
 }
 
-.chat-card[data-status="Aguardando"] { border-left-color: var(--accent); }
-.chat-card[data-status="Em_atendimento"] { border-left-color: var(--success); }
-.chat-card[data-status="Finalizado"] { border-left-color: var(--danger); }
+/* Status Positivos (Potencial e Fechamento) */
+.chat-card[data-status="Potencial_venda"],
+.chat-card[data-status="Pronto_para_fechar"] {
+  border-left-color: var(--success); /* Verde */
+}
 
+/* Status Neutros (Precisam de atenção) */
+.chat-card[data-status="Interessado"],
+.chat-card[data-status="Em_duvida"] {
+  border-left-color: var(--accent);  /* Cor de destaque (Amarelo/Azul) */
+}
+
+/* Status Negativo */
+.chat-card[data-status="Sem_Interesse"] {
+  border-left-color: var(--danger);  /* Vermelho */
+}
 .chat-info {
     display: flex;
     flex-direction: column;
@@ -603,4 +615,5 @@
 .modal-header h3 {
     color: var(--primary);
     font-size: 22px;
+
 }
